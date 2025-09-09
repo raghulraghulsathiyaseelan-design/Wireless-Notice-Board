@@ -1,0 +1,36 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include "BluetoothSerial.h"
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // LCD address 0x27, 16x2
+BluetoothSerial SerialBT;            // Bluetooth serial object
+
+char incomingChar;
+char message[32];     // buffer for incoming message
+int index = 0;
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(9600);
+  SerialBT.begin("NoticeBoard");  // Bluetooth device name
+  lcd.setCursor(0,0);
+  lcd.print("Waiting Msg...");
+}
+
+void loop() {
+  if (SerialBT.available()) {
+    incomingChar = SerialBT.read();
+
+    if (incomingChar == '\n') {  // message end
+      message[index] = '\0';
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print(message);        // display message
+      index = 0;                 // reset buffer
+    } else {
+      message[index++] = incomingChar;
+      if(index >= 31) index = 31; // avoid overflow
+    }
+  }
+}
